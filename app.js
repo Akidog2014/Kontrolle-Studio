@@ -66,7 +66,7 @@ const fotoDatenbankBereit = new Promise((resolve, reject) => {
 
 
 // Foto zu einem Studio speichern
-async function studioFotoSpeichern(studioId, datei) {
+async function studioFotoSpeichern(studioId, datei, kontrolleId = null) {
     await fotoDatenbankBereit;
 
     return new Promise((resolve, reject) => {
@@ -77,6 +77,7 @@ async function studioFotoSpeichern(studioId, datei) {
 
         transaktion.objectStore("fotos").add({
             studioId: studioId,
+            kontrolleId: kontrolleId,
             dateiname: datei.name,
             typ: datei.type,
             bild: datei,
@@ -522,6 +523,17 @@ function kontrolleErfassen(id) {
                 <label>Weitere Feststellungen</label>
                 <textarea id="weitere"></textarea>
 
+                <h3>Fotos zur Kontrolle</h3>
+
+                <input
+                type="file"
+                id="kontrollFotos"
+                accept="image/*"
+                multiple
+                >
+
+<div id="kontrollFotoVorschau"></div>
+
                 <button type="submit">Kontrolle speichern</button>
                 <button type="button" id="abbrechen">
                     Abbrechen
@@ -534,7 +546,7 @@ function kontrolleErfassen(id) {
         .addEventListener("click", () => studioAnzeigen(id));
 
     document.getElementById("kontrollForm")
-        .addEventListener("submit", function(e) {
+        .addEventListener("submit", async function(e) {
             e.preventDefault();
 
             const zeitpunkt =
@@ -567,6 +579,20 @@ function kontrolleErfassen(id) {
                 k.feststellungen += " | Weitere: " + weitere;
             }
 
+            // Ausgewählte Fotos zur Kontrolle speichern
+const fotoDateien = Array.from(
+    document.getElementById("kontrollFotos").files
+);
+
+try {
+    for (const datei of fotoDateien) {
+        await studioFotoSpeichern(id, datei, k.id);
+    }
+} catch (fehler) {
+    alert("Die Fotos konnten nicht gespeichert werden. Bitte nochmals versuchen.");
+    return;
+}
+           
             if (!kontrollHistorie[id]) {
                 kontrollHistorie[id] = [];
             }
