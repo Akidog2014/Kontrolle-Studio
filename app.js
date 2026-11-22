@@ -396,9 +396,13 @@ function studioAnzeigen(id) {
 
 <div id="studioFotoListe"></div>
 
-            <button id="neueKontrolle">
-                Neue Kontrolle erfassen
-            </button>
+<button id="berichtErstellen">
+    Bericht erstellen
+</button>
+
+<button id="neueKontrolle">
+    Neue Kontrolle erfassen
+</button>
 
             <button id="zurueck">Zurück zur Suche</button>
         </section>
@@ -440,6 +444,9 @@ excelKontrollenButton.addEventListener("click", () => {
 
     document.getElementById("neueKontrolle")
         .addEventListener("click", () => kontrolleErfassen(id));
+
+    document.getElementById("berichtErstellen")
+    .addEventListener("click", () => pdfBerichtErstellen(id));
 
     document.getElementById("zurueck")
         .addEventListener("click", studiosuche);
@@ -607,6 +614,302 @@ try {
             studioAnzeigen(id);
         });
 }
+
+// Foto für die PDF-Erstellung vorbereiten
+function fotoAlsDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const leser = new FileReader();
+
+        leser.onload = function() {
+            resolve(leser.result);
+        };
+
+        leser.onerror = function() {
+            reject(leser.error);
+        };
+
+        leser.readAsDataURL(blob);
+    });
+}
+
+// PDF-Bericht für ein Studio erstellen
+async function pdfBerichtErstellen(studioId) {
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("Die PDF-Bibliothek wurde nicht geladen.");
+        return;
+    }
+
+    const studio = studios.find(
+        s => String(s.id) === String(studioId)
+    );
+
+    if (!studio) {
+        alert("Studio nicht gefunden.");
+        return;
+    }
+
+    const kontrollen = [
+        ...(kontrollHistorie[studioId] || [])
+    ].sort((a, b) =>
+        a.zeitpunkt.localeCompare(b.zeitpunkt)
+    );
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        const seitenBreite =
+            pdf.internal.pageSize.getWidth();
+
+        const seitenHoehe =
+            pdf.internal.pageSize.getHeight();
+
+        const rand = 20;
+        let y = 20;
+
+        function platzPruefen(hoehe) {
+            if (y + hoehe > seitenHoehe - 20) {
+                pdf.addPage();
+                y = 20;
+            }
+        }
+
+        function textSchreiben(text, groesse = 10, fett = false) {
+            pdf.setFont("helvetica", fett ? "bold" : "normal");
+            pdf.setFontSize(groesse);
+
+            const zeilen = pdf.splitTextToSize(
+                String(text || ""),
+                seitenBreite - rand * 2
+            );
+
+            platzPruefen(zeilen.length * 6 + 4);
+
+            pdf.text(zeilen, rand, y);
+            y += zeilen.length * 6 + 4;
+        }
+
+        // Titel
+        pdf.setFontSize(20);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("STUDIO-KONTROLLBERICHT", rand, y);
+        y += 15;
+
+        textSchreiben(studio.etablissement, 16, true);
+
+        textSchreiben(
+            "Berichtsdatum: " +
+            new Date().toLocaleDateString("de-CH")
+        );
+
+        y += 5;
+
+        // Studioangaben
+        textSchreiben("ANGABEN ZUM STUDIO", 13, true);
+
+        textSchreiben("Ort: " + studio.ort);
+        textSchreiben("Adresse: " + studio.adresse);
+        textSchreiben("Gebäude: " + studio.gebaeude);
+        textSchreiben("Kontakt: " + studio.kontakt);
+        textSchreiben("Bemerkung: " + studio.bemerkung);
+
+        y += 8;
+
+        // Fotos laden
+        const fotos = await studioFotosLaden(studioId);
+
+        // Alle Kontrollen
+        textSchreiben("DURCHGEFÜHRTE KONTROLLEN", 13, true);
+
+        if (kontrollen.length === 0) {
+            textSchreiben("Noch keine Kontrollen vorhanden.");
+        }
+
+        for (const kontrolle of kontrollen) {
+
+            platzPruefen(20);
+            y += 5;
+
+            textSchreiben(
+                "Kontrolle vom " +
+                kontrolle.datum +
+                " um " +
+                kontrolle.uhrzeit,
+                12,
+                true
+            );
+
+            textSchreiben(
+                "Mitarbeiter: " + kontrolle.mitarbeiter
+            );
+
+            textSchreiben(
+                "Kontrollierte Personen: " +
+                kontrolle.personen
+            );
+
+            textSchreiben(
+                "Feststellungen: " +
+                kontrolle.feststellungen
+            );
+
+            // Fotos dieser Kontrolle
+            const kontrollFotos = fotos.filter(
+                foto => foto.kontrolleId === kontrolle.id
+            );
+
+            for (const foto of kontrollFotos) {
+
+                try {
+                    const dataUrl =
+                        await fotoAlsDataUrl(foto.bild);
+
+                    const bildInfo =
+                        pdf.getImageProperties(dataUrl);
+
+                    const maxBreite =
+                        seitenBreite - rand * 2;
+
+                    const maxHoehe = 110;
+
+                    const faktor = Math.min(
+                        maxBreite / bildInfo.width,
+                        maxHoehe / bildInfo.height
+                    );
+
+                    const bildBreite =
+                        bildInfo.width * faktor;
+
+                    const bildHoehe =
+                        bildInfo.height * faktor;
+
+                    platzPruefen(bildHoehe + 15);
+
+                    pdf.addImage(
+                        dataUrl,
+                        undefined,
+                        rand,
+                        y,
+                        bildBreite,
+                        bildHoehe
+                    );
+
+                    y += bildHoehe + 10;
+
+                } catch (fotoFehler) {
+                    textSchreiben(
+                        "Ein Foto konnte nicht eingefügt werden: " +
+                        foto.dateiname
+                    );
+                }
+            }
+        }
+
+        // Ältere Fotos ohne Kontrollzuordnung ebenfalls aufnehmen
+        const weitereFotos = fotos.filter(
+            foto => !foto.kontrolleId
+        );
+
+        if (weitereFotos.length > 0) {
+
+            y += 5;
+            textSchreiben("WEITERE STUDIOFOTOS", 13, true);
+
+            for (const foto of weitereFotos) {
+
+                try {
+                    const dataUrl =
+                        await fotoAlsDataUrl(foto.bild);
+
+                    const bildInfo =
+                        pdf.getImageProperties(dataUrl);
+
+                    const faktor = Math.min(
+                        (seitenBreite - rand * 2) / bildInfo.width,
+                        110 / bildInfo.height
+                    );
+
+                    const bildBreite =
+                        bildInfo.width * faktor;
+
+                    const bildHoehe =
+                        bildInfo.height * faktor;
+
+                    platzPruefen(bildHoehe + 15);
+
+                    pdf.addImage(
+                        dataUrl,
+                        undefined,
+                        rand,
+                        y,
+                        bildBreite,
+                        bildHoehe
+                    );
+
+                    y += bildHoehe + 10;
+
+                } catch (fotoFehler) {
+                    textSchreiben(
+                        "Ein Foto konnte nicht eingefügt werden: " +
+                        foto.dateiname
+                    );
+                }
+            }
+        }
+
+        // Seitenzahlen
+        const seitenAnzahl = pdf.internal.getNumberOfPages();
+
+        for (let i = 1; i <= seitenAnzahl; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(9);
+            pdf.setFont("helvetica", "normal");
+
+            pdf.text(
+                "Seite " + i + " von " + seitenAnzahl,
+                seitenBreite / 2,
+                seitenHoehe - 10,
+                { align: "center" }
+            );
+        }
+
+        // PDF-Dateiname
+        const sichererName =
+            studio.etablissement.replace(
+                /[^a-zA-Z0-9äöüÄÖÜß_-]/g,
+                "_"
+            );
+
+        const dateiname =
+            "Studio-Bericht-" + sichererName + ".pdf";
+
+        const pdfBlob = pdf.output("blob");
+
+        const pdfDatei = new File(
+            [pdfBlob],
+            dateiname,
+            { type: "application/pdf" }
+        );
+
+        if (
+            navigator.canShare &&
+            navigator.canShare({ files: [pdfDatei] })
+        ) {
+            await navigator.share({
+                files: [pdfDatei],
+                title: "Studio-Kontrollbericht"
+            });
+        } else {
+            pdf.save(dateiname);
+        }
+
+    } catch (fehler) {
+        console.error(fehler);
+        alert("Der PDF-Bericht konnte nicht erstellt werden.");
+    }
+}
+
 // Excel-Datei importieren
 function excelImportieren(e) {
     const datei = e.target.files[0];
