@@ -749,11 +749,30 @@ async function pdfBerichtErstellen(studioId) {
                 kontrolle.personen
             );
 
-            textSchreiben(
-                "Feststellungen: " +
-                kontrolle.feststellungen
-            );
+const feststellungen = String(
+    kontrolle.feststellungen || ""
+)
+    .split("|")
+    .map(eintrag => eintrag.trim())
+    .filter(eintrag => {
+        const treffer = eintrag.match(/:\s*(-?\d+(?:[.,]\d+)?)\s*$/);
 
+        if (!treffer) {
+            return eintrag !== "";
+        }
+
+        return Number(
+            treffer[1].replace(",", ".")
+        ) !== 0;
+    });
+
+textSchreiben(
+    "Feststellungen:" +
+    (feststellungen.length > 0
+        ? " " + feststellungen.join(" | ")
+        : "")
+);
+        
             // Fotos dieser Kontrolle
             const kontrollFotos = fotos.filter(
                 foto => foto.kontrolleId === kontrolle.id
