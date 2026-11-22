@@ -59,28 +59,60 @@ const fotoDatenbankBereit = new Promise((resolve, reject) => {
         resolve(fotoDatenbank);
     };
 
-    // Foto zu einem Studio speichern
+    anfrage.onerror = function() {
+        reject(anfrage.error);
+    };
+});
+
+
+// Foto zu einem Studio speichern
 async function studioFotoSpeichern(studioId, datei) {
     await fotoDatenbankBereit;
 
-    const transaktion = fotoDatenbank.transaction(
-        ["fotos"],
-        "readwrite"
-    );
-
-    transaktion.objectStore("fotos").add({
-        studioId: studioId,
-        dateiname: datei.name,
-        typ: datei.type,
-        bild: datei,
-        erstellt: new Date().toISOString()
-    });
-
     return new Promise((resolve, reject) => {
+        const transaktion = fotoDatenbank.transaction(
+            ["fotos"],
+            "readwrite"
+        );
+
+        transaktion.objectStore("fotos").add({
+            studioId: studioId,
+            dateiname: datei.name,
+            typ: datei.type,
+            bild: datei,
+            erstellt: new Date().toISOString()
+        });
+
         transaktion.oncomplete = () => resolve();
         transaktion.onerror = () => reject(transaktion.error);
     });
 }
+
+
+// Fotos eines Studios laden
+async function studioFotosLaden(studioId) {
+    await fotoDatenbankBereit;
+
+    return new Promise((resolve, reject) => {
+        const transaktion = fotoDatenbank.transaction(
+            ["fotos"],
+            "readonly"
+        );
+
+        const anfrage = transaktion.objectStore("fotos").getAll();
+
+        anfrage.onsuccess = function() {
+            resolve(
+                anfrage.result.filter(
+                    foto => foto.studioId === studioId
+                )
+            );
+        };
+
+        anfrage.onerror = () => reject(anfrage.error);
+    });
+}
+
 
 // Fotos eines Studios anzeigen
 async function studioFotosAnzeigen(studioId) {
