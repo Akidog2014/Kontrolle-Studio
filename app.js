@@ -914,11 +914,52 @@ try {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     }
     );
+
+// Fotos der exportierten Kontrollen zusammensuchen
+const dateienZumTeilen = [exportDatei];
+
+for (const studio of studios) {
+    const kontrollenDiesesStudios = exportierteKontrollen.filter(
+        k => (kontrollHistorie[studio.id] || [])
+            .some(eintrag => eintrag.id === k.id)
+    );
+
+    if (kontrollenDiesesStudios.length === 0) continue;
+
+    const fotos = await studioFotosLaden(studio.id);
+
+    const passendeFotos = fotos.filter(foto =>
+        kontrollenDiesesStudios.some(
+            kontrolle => kontrolle.id === foto.kontrolleId
+        )
+    );
+
+    for (let i = 0; i < passendeFotos.length; i++) {
+        const foto = passendeFotos[i];
+
+        const endung = foto.dateiname.includes(".")
+            ? foto.dateiname.split(".").pop()
+            : "jpg";
+
+        const studioName = studio.etablissement.replace(
+            /[^a-zA-Z0-9äöüÄÖÜß_-]/g,
+            "_"
+        );
+
+        const fotoDatei = new File(
+            [foto.bild],
+            `${studioName}_Foto_${i + 1}.${endung}`,
+            { type: foto.typ || "image/jpeg" }
+        );
+
+        dateienZumTeilen.push(fotoDatei);
+    }
+}
     
-if (navigator.canShare && navigator.canShare({ files: [exportDatei] })) {
+if (navigator.canShare && navigator.canShare({ files: dateienZumTeilen })) {
 
     await navigator.share({
-        files: [exportDatei],
+        files: dateienZumTeilen,
         title: "Studio-Kontrolle Export",
         text: "Hier ist die exportierte Kontrollliste."
     });
