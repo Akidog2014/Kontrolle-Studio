@@ -88,6 +88,22 @@ async function studioFotoSpeichern(studioId, datei) {
     });
 }
 
+// Einzelnes Studio-Foto löschen
+async function studioFotoLoeschen(fotoId) {
+    await fotoDatenbankBereit;
+
+    return new Promise((resolve, reject) => {
+        const transaktion = fotoDatenbank.transaction(
+            ["fotos"],
+            "readwrite"
+        );
+
+        transaktion.objectStore("fotos").delete(fotoId);
+
+        transaktion.oncomplete = () => resolve();
+        transaktion.onerror = () => reject(transaktion.error);
+    });
+}
 
 // Fotos eines Studios laden
 async function studioFotosLaden(studioId) {
@@ -127,18 +143,32 @@ async function studioFotosAnzeigen(studioId) {
     }
 
     fotos.forEach(foto => {
-        const bild = document.createElement("img");
+        const container = document.createElement("div");
+        container.style.marginTop = "15px";
 
+        const bild = document.createElement("img");
         bild.src = URL.createObjectURL(foto.bild);
         bild.alt = foto.dateiname;
-
         bild.style.width = "100%";
         bild.style.maxWidth = "300px";
         bild.style.display = "block";
-        bild.style.marginTop = "12px";
         bild.style.borderRadius = "8px";
 
-        fotoListe.appendChild(bild);
+        const loeschenButton = document.createElement("button");
+        loeschenButton.textContent = "Foto löschen";
+
+        loeschenButton.onclick = async function() {
+            if (!confirm("Möchtest du dieses Foto wirklich löschen?")) {
+                return;
+            }
+
+            await studioFotoLoeschen(foto.id);
+            studioFotosAnzeigen(studioId);
+        };
+
+        container.appendChild(bild);
+        container.appendChild(loeschenButton);
+        fotoListe.appendChild(container);
     });
 }
 
