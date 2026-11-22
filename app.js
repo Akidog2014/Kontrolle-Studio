@@ -172,6 +172,48 @@ async function studioFotosAnzeigen(studioId) {
     });
 }
 
+// Alle Fotos eines Studios teilen
+async function studioFotosTeilen(studioId) {
+    const fotos = await studioFotosLaden(studioId);
+
+    if (fotos.length === 0) {
+        alert("Für dieses Studio sind noch keine Fotos vorhanden.");
+        return;
+    }
+
+    const studio = studios.find(s => String(s.id) === String(studioId));
+    const studioName = studio ? studio.etablissement : "Studio";
+
+    const dateien = [];
+
+    for (let i = 0; i < fotos.length; i++) {
+        const foto = fotos[i];
+
+        const endung = foto.dateiname.includes(".")
+            ? foto.dateiname.split(".").pop()
+            : "jpg";
+
+        const dateiname = `${studioName.replace(/[^a-zA-Z0-9äöüÄÖÜ_-]/g, "_")}_${i + 1}.${endung}`;
+
+        const datei = new File(
+            [foto.bild],
+            dateiname,
+            { type: foto.typ || "image/jpeg" }
+        );
+
+        dateien.push(datei);
+    }
+
+    if (navigator.canShare && navigator.canShare({ files: dateien })) {
+        await navigator.share({
+            files: dateien,
+            title: `Fotos – ${studioName}`
+        });
+    } else {
+        alert("Das Teilen von Fotos wird auf diesem Gerät leider nicht unterstützt.");
+    }
+}
+
 // Mitarbeiterkürzel einmalig speichern
 let mitarbeiter = localStorage.getItem("mitarbeiter");
 
@@ -347,6 +389,10 @@ function studioAnzeigen(id) {
     Fotos hinzufügen
 </button>
 
+<button id="studioFotosTeilen">
+    Alle Fotos per E-Mail teilen
+</button>
+
 <div id="studioFotoListe"></div>
 
             <button id="neueKontrolle">
@@ -396,6 +442,9 @@ excelKontrollenButton.addEventListener("click", () => {
 
     document.getElementById("zurueck")
         .addEventListener("click", studiosuche);
+
+    document.getElementById("studioFotosTeilen")
+    .addEventListener("click", () => studioFotosTeilen(id));
 
     // Fotos hinzufügen
 document.getElementById("studioFotoHinzufuegen")
