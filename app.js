@@ -37,9 +37,78 @@ let excelDateiDaten = null;
 // Kontrollhistorie lokal auf dem Gerät speichern
 const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
 
-let kontrollHistorie = JSON.parse(
-    localStorage.getItem(SPEICHER_SCHLUESSEL) || "{}"
-);
+// Lokale Datenbank für Studio-Fotos
+let fotoDatenbank;
+
+const fotoDatenbankBereit = new Promise((resolve, reject) => {
+    const anfrage = indexedDB.open("StudioKontrolleFotos", 1);
+
+    anfrage.onupgradeneeded = function(e) {
+        const datenbank = e.target.result;
+
+        if (!datenbank.objectStoreNames.contains("fotos")) {
+            datenbank.createObjectStore("fotos", {
+                keyPath: "id",
+                autoIncrement: true
+            });
+        }
+    };
+
+    anfrage.onsuccess = function(e) {
+        fotoDatenbank = e.target.result;
+        resolve(fotoDatenbank);
+    };
+
+    // Foto zu einem Studio speichern
+async function studioFotoSpeichern(studioId, datei) {
+    await fotoDatenbankBereit;
+
+    const transaktion = fotoDatenbank.transaction(
+        ["fotos"],
+        "readwrite"
+    );
+
+    transaktion.objectStore("fotos").add({
+        studioId: studioId,
+        dateiname: datei.name,
+        typ: datei.type,
+        bild: datei,
+        erstellt: new Date().toISOString()
+    });
+
+    return new Promise((resolve, reject) => {
+        transaktion.oncomplete = () => resolve();
+        transaktion.onerror = () => reject(transaktion.error);
+    });
+}
+
+// Fotos eines Studios anzeigen
+async function studioFotosAnzeigen(studioId) {
+    const fotoListe = document.getElementById("studioFotoListe");
+    const fotos = await studioFotosLaden(studioId);
+
+    fotoListe.innerHTML = "";
+
+    if (fotos.length === 0) {
+        fotoListe.textContent = "Noch keine Fotos vorhanden.";
+        return;
+    }
+
+    fotos.forEach(foto => {
+        const bild = document.createElement("img");
+
+        bild.src = URL.createObjectURL(foto.bild);
+        bild.alt = foto.dateiname;
+
+        bild.style.width = "100%";
+        bild.style.maxWidth = "300px";
+        bild.style.display = "block";
+        bild.style.marginTop = "12px";
+        bild.style.borderRadius = "8px";
+
+        fotoListe.appendChild(bild);
+    });
+}
 
 // Mitarbeiterkürzel einmalig speichern
 let mitarbeiter = localStorage.getItem("mitarbeiter");
@@ -202,6 +271,22 @@ function studioAnzeigen(id) {
             <h3>Neu erfasste Kontrollen</h3>
             <div id="historie"></div>
 
+            <h3>Studio-Fotos</h3>
+
+<input
+    type="file"
+    id="studioFotoDatei"
+    accept="image/*"
+    multiple
+    style="display:none;"
+>
+
+<button id="studioFotoHinzufuegen">
+    Fotos hinzufügen
+</button>
+
+<div id="studioFotoListe"></div>
+
             <button id="neueKontrolle">
                 Neue Kontrolle erfassen
             </button>
@@ -249,6 +334,36 @@ excelKontrollenButton.addEventListener("click", () => {
 
     document.getElementById("zurueck")
         .addEventListener("click", studiosuche);
+
+    // Fotos hinzufügen
+document.getElementById("studioFotoHinzufuegen")
+    .addEventListener("click", () => {
+        document.getElementById("studioFotoDatei").click();
+    });
+
+// Ausgewählte Fotos speichern
+document.getElementById("studioFotoDatei")
+    .addEventListener("change", async function() {
+        const dateien = Array.from(this.files);
+
+        try {
+            for (const datei of dateien) {
+                await studioFotoSpeichern(id, datei);
+            }
+
+            await studioFotosAnzeigen(id);
+
+            alert("Fotos wurden erfolgreich gespeichert.");
+        } catch (fehler) {
+            alert("Die Fotos konnten nicht gespeichert werden.");
+            console.error(fehler);
+        }
+
+        this.value = "";
+    });
+
+// Bereits gespeicherte Fotos anzeigen
+studioFotosAnzeigen(id);
 }
 
 // Neue Kontrolle erfassen
