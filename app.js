@@ -492,62 +492,63 @@ function kontrolleErfassen(id) {
         jetzt.getTime() - jetzt.getTimezoneOffset() * 60000
     ).toISOString().slice(0, 16);
 
-    app.innerHTML = `
-        <section>
-            <h2>Neue Kontrolle</h2>
+app.innerHTML = `
+    <section>
+        <h2>${sicher(studio.etablissement)}</h2>
 
-            <form id="kontrollForm">
+        <p><strong>Ort:</strong> ${sicher(studio.ort)}</p>
+        <p><strong>Adresse:</strong> ${sicher(studio.adresse)}</p>
+        <p><strong>Gebäude:</strong> ${sicher(studio.gebaeude)}</p>
+        <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
+        <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
 
-                <label>Datum und Uhrzeit</label>
-                <input type="datetime-local"
-                    id="zeitpunkt"
-                    value="${lokal}"
-                    required>
+        <button id="neueKontrolle">
+            Neue Kontrolle erfassen
+        </button>
 
-                <label>Mitarbeiterkürzel</label>
-                <input value="${sicher(mitarbeiter)}" disabled>
+        <h3>Studio-Fotos</h3>
 
-                <label>Kontrollierte Personen</label>
-                <input type="number" id="personen"
-                    min="0" step="1" value="0" required>
+        <input
+            type="file"
+            id="studioFotoDatei"
+            accept="image/*"
+            multiple
+            style="display:none;"
+        >
 
-                <h3>Feststellungen</h3>
+        <button id="studioFotoHinzufuegen">
+            Fotos hinzufügen
+        </button>
 
-                ${[
-                    "Meldeverstoss",
-                    "Festnahme",
-                    "RIPOL-Ausschreibung",
-                    "Bericht allgemein",
-                    "Aufenthaltsnachforschung"
-                ].map(name => `
-                    <label>${name}</label>
-                    <input type="number"
-                        class="feststellung"
-                        data-name="${name}"
-                        min="0" step="1" value="0">
-                `).join("")}
+        <div id="studioFotoListe"></div>
 
-                <label>Weitere Feststellungen</label>
-                <textarea id="weitere"></textarea>
+        <button id="zurueck">
+            Zurück zur Suche
+        </button>
 
-                <h3>Fotos zur Kontrolle</h3>
+        <div style="margin-top: 35px;">
 
-                <input
-                type="file"
-                id="kontrollFotos"
-                accept="image/*"
-                multiple
-                >
+            <button id="berichtErstellen">
+                Bericht erstellen
+            </button>
 
-<div id="kontrollFotoVorschau"></div>
+            <button id="studioFotosTeilen">
+                Alle Fotos per E-Mail teilen
+            </button>
 
-                <button type="submit">Kontrolle speichern</button>
-                <button type="button" id="abbrechen">
-                    Abbrechen
-                </button>
-            </form>
-        </section>
-    `;
+        </div>
+
+        <button id="excelKontrollenButton">
+            Bisherige Kontrollen anzeigen
+        </button>
+
+        <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
+
+        <h3>Neu erfasste Kontrollen</h3>
+        <div id="historie"></div>
+
+    </section>
+`;
 
     document.getElementById("abbrechen")
         .addEventListener("click", () => studioAnzeigen(id));
