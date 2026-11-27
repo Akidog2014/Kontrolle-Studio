@@ -1168,6 +1168,8 @@ function excelImportieren() {
 
     dateiInput.addEventListener("change", async function() {
 
+        alert("Datei wurde ausgewählt!");
+        
         const datei = dateiInput.files[0];
 
         if (!datei) {
