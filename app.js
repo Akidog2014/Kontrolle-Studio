@@ -1154,39 +1154,51 @@ async function pdfBerichtErstellen(studioId) {
     }
 }
 
+
 // ==========================================
 // TEIL 4: EXCEL-IMPORT
 // ==========================================
+
 function excelImportieren() {
 
-    const dateiInput = document.createElement("input");
+    // Festes Dateifeld aus der index.html verwenden
+    const dateiInput = document.getElementById("excelDatei");
 
-    dateiInput.type = "file";
-    dateiInput.accept = ".xlsx,.xls";
+    if (!dateiInput) {
+        alert("Das Dateifeld wurde nicht gefunden.");
+        return;
+    }
 
-    dateiInput.addEventListener("change", async function() {
+    // Alten Dateinamen zurücksetzen
+    dateiInput.value = "";
 
-        alert("Datei wurde ausgewählt!");
-        
+    // Ereignis für die Dateiauswahl festlegen
+    // onChange verhindert doppelte Ereignislistener
+    dateiInput.onchange = async function() {
+
         const datei = dateiInput.files[0];
 
         if (!datei) {
             return;
         }
 
-        await fotoDatenbankBereit;
-        
-        const bestaetigt = confirm(
-            "Beim Import einer neuen Excel-Datei wird die bisherige " +
-            "Kontrollhistorie ersetzt.\n\n" +
-            "Möchtest du fortfahren?"
-        );
-
-        if (!bestaetigt) {
-            return;
-        }
-
         try {
+
+            // Datenbank bereitstellen
+            await fotoDatenbankBereit;
+
+            // Bestätigung einholen
+            const bestaetigt = confirm(
+                "Beim Import einer neuen Excel-Datei wird die bisherige " +
+                "Kontrollhistorie ersetzt.\n\n" +
+                "Möchtest du fortfahren?"
+            );
+
+            if (!bestaetigt) {
+                return;
+            }
+
+            // Excel-Datei einlesen
             const arrayBuffer = await datei.arrayBuffer();
 
             const workbook = XLSX.read(arrayBuffer, {
@@ -1195,8 +1207,10 @@ function excelImportieren() {
 
             const neueStudios = [];
 
+            // Alle Tabellenblätter durchgehen
             workbook.SheetNames.forEach(tabellenName => {
 
+                // Internes Kontrollblatt überspringen
                 if (tabellenName === "_KontrollIDs") {
                     return;
                 }
@@ -1214,7 +1228,7 @@ function excelImportieren() {
 
                 zeilen.forEach((zeile, index) => {
 
-                    // Erste Zeile enthält normalerweise die Überschriften
+                    // Erste Zeile enthält Überschriften
                     if (index === 0) {
                         return;
                     }
@@ -1230,6 +1244,7 @@ function excelImportieren() {
                     }
 
                     neueStudios.push({
+
                         id: "excel-" +
                             Date.now() +
                             "-" +
@@ -1244,14 +1259,20 @@ function excelImportieren() {
                         kontrollen: String(zeile[4] || ""),
                         kontakt: String(zeile[5] || ""),
                         bemerkung: String(zeile[6] || "")
+
                     });
+
                 });
+
             });
 
+            // Prüfen, ob Studios gefunden wurden
             if (neueStudios.length === 0) {
+
                 alert(
                     "In der Excel-Datei wurden keine Studios gefunden."
                 );
+
                 return;
             }
 
@@ -1259,7 +1280,10 @@ function excelImportieren() {
             await new Promise((resolve, reject) => {
 
                 const transaktion =
-                    fotoDatenbank.transaction(["excel"], "readwrite");
+                    fotoDatenbank.transaction(
+                        ["excel"],
+                        "readwrite"
+                    );
 
                 const speicher =
                     transaktion.objectStore("excel");
@@ -1274,8 +1298,15 @@ function excelImportieren() {
                 );
 
                 transaktion.oncomplete = resolve;
-                transaktion.onerror = () => reject(transaktion.error);
-                transaktion.onabort = () => reject(transaktion.error);
+
+                transaktion.onerror = () => {
+                    reject(transaktion.error);
+                };
+
+                transaktion.onabort = () => {
+                    reject(transaktion.error);
+                };
+
             });
 
             // Neue Studiendaten übernehmen
@@ -1286,7 +1317,7 @@ function excelImportieren() {
                 JSON.stringify(studios)
             );
 
-            // Bisherige Kontrollhistorie zurücksetzen
+            // Kontrollhistorie zurücksetzen
             kontrollHistorie = {};
 
             localStorage.setItem(
@@ -1294,10 +1325,12 @@ function excelImportieren() {
                 JSON.stringify(kontrollHistorie)
             );
 
+            // Excel-Daten für weitere Funktionen bereitstellen
             excelArbeitsmappe = workbook;
             excelTabellenName = workbook.SheetNames[0];
             excelDateiDaten = arrayBuffer;
 
+            // Erfolgsmeldung
             alert(
                 neueStudios.length +
                 " Studios wurden erfolgreich importiert."
@@ -1307,16 +1340,25 @@ function excelImportieren() {
 
         } catch (fehler) {
 
-            console.error(fehler);
+            console.error(
+                "Fehler beim Excel-Import:",
+                fehler
+            );
 
             alert(
-                "Die Excel-Datei konnte nicht importiert werden."
+                "Die Excel-Datei konnte nicht importiert werden.\n\n" +
+                fehler.message
             );
-        }
-    });
 
+        }
+
+    };
+
+    // Dateiauswahl unmittelbar durch den Benutzerklick öffnen
     dateiInput.click();
+
 }
+
 
 // ==========================================
 // TEIL 5: EXCEL-EXPORT
