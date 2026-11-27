@@ -367,11 +367,15 @@ function studioAnzeigen(id) {
         <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
         <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
 
-        <button id="neueKontrolle">
-            Neue Kontrolle erfassen
-        </button>
+<button id="neueKontrolle">
+    Neue Kontrolle erfassen
+</button>
 
-        <h3>Studio-Fotos</h3>
+<button id="zurueck">
+    Zurück zur Suche
+</button>
+
+<h3>Studio-Fotos</h3>
 
         <input
             type="file"
@@ -386,10 +390,6 @@ function studioAnzeigen(id) {
         </button>
 
         <div id="studioFotoListe"></div>
-
-        <button id="zurueck">
-            Zurück zur Suche
-        </button>
 
         <div style="margin-top: 35px;">
 
