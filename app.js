@@ -37,6 +37,10 @@ let excelDateiDaten = null;
 // Kontrollhistorie lokal auf dem Gerät speichern
 const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
 
+let kontrollHistorie = JSON.parse(
+    localStorage.getItem(SPEICHER_SCHLUESSEL) || "{}"
+);
+
 // Lokale Datenbank für Studio-Fotos
 let fotoDatenbank;
 
