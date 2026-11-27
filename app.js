@@ -45,7 +45,11 @@ let kontrollHistorie = JSON.parse(
 let fotoDatenbank;
 
 const fotoDatenbankBereit = new Promise((resolve, reject) => {
-    const anfrage = indexedDB.open("StudioKontrolleFotos", 1);
+    const anfrage = indexedDB.open("StudioKontrolleFotos", 2);
+
+    if (!datenbank.objectStoreNames.contains("excel")) {
+    datenbank.createObjectStore("excel");
+}
 
     anfrage.onupgradeneeded = function(e) {
         const datenbank = e.target.result;
@@ -1011,9 +1015,27 @@ function excelImportieren(e) {
 
     const leser = new FileReader();
 
-    leser.onload = function(event) {
+    leser.onload = async function(event) {
         try {
             excelDateiDaten = event.target.result.slice(0);
+
+            await fotoDatenbankBereit;
+
+await new Promise((resolve, reject) => {
+    const transaktion = fotoDatenbank.transaction(
+        ["excel"],
+        "readwrite"
+    );
+
+    transaktion.objectStore("excel").put(
+        excelDateiDaten,
+        "original"
+    );
+
+    transaktion.oncomplete = resolve;
+    transaktion.onerror = () => reject(transaktion.error);
+    transaktion.onabort = () => reject(transaktion.error);
+});
 
             excelArbeitsmappe = XLSX.read(
                 event.target.result,
@@ -1648,5 +1670,41 @@ speicherButton.addEventListener("click", async function() {
     dateiAuswahl.click();
 }
 
-// Anwendung starten
-startseite();
+// Gespeicherte Excel-Datei beim App-Start wiederherstellen
+async function excelWiederherstellen() {
+    try {
+        await fotoDatenbankBereit;
+
+        const gespeicherteDatei = await new Promise((resolve, reject) => {
+            const transaktion = fotoDatenbank.transaction(
+                ["excel"],
+                "readonly"
+            );
+
+            const anfrage = transaktion
+                .objectStore("excel")
+                .get("original");
+
+            anfrage.onsuccess = () => resolve(anfrage.result);
+            anfrage.onerror = () => reject(anfrage.error);
+        });
+
+        if (gespeicherteDatei) {
+            excelDateiDaten = gespeicherteDatei;
+
+            excelArbeitsmappe = XLSX.read(
+                excelDateiDaten,
+                { type: "array" }
+            );
+
+            excelTabellenName = excelArbeitsmappe.SheetNames[0];
+        }
+
+    } catch (fehler) {
+        console.error("Excel-Datei konnte nicht wiederhergestellt werden:", fehler);
+    }
+
+    startseite();
+}
+
+excelWiederherstellen();
