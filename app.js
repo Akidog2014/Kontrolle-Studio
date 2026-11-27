@@ -38,6 +38,7 @@ let excelDateiDaten = null;
 
 // Kontrollhistorie lokal auf dem Gerät speichern
 const SPEICHER_SCHLUESSEL = "studioKontrollHistorie";
+let fotoDatenbank;
 
 let kontrollHistorie = JSON.parse(
     localStorage.getItem(SPEICHER_SCHLUESSEL) || "{}"
@@ -1166,6 +1167,8 @@ async function pdfBerichtErstellen(studioId) {
 
 async function excelImportieren() {
 
+    await fotoDatenbankBereit;
+
     const dateiInput = document.createElement("input");
 
     dateiInput.type = "file";
@@ -1262,7 +1265,7 @@ async function excelImportieren() {
             await new Promise((resolve, reject) => {
 
                 const transaktion =
-                    fotoDB.transaction(["excel"], "readwrite");
+                    fotoDatenbank.transaction(["excel"], "readwrite");
 
                 const speicher =
                     transaktion.objectStore("excel");
@@ -1972,6 +1975,7 @@ async function kontrollenZusammenfuehren() {
 // ==========================================
 
 async function excelWiederherstellen() {
+    await fotoDatenbankBereit;
 
     try {
 
@@ -1979,7 +1983,7 @@ async function excelWiederherstellen() {
             (resolve, reject) => {
 
                 const transaktion =
-                    fotoDB.transaction(["excel"], "readonly");
+                    fotoDatenbank.transaction(["excel"], "readonly");
 
                 const speicher =
                     transaktion.objectStore("excel");
