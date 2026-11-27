@@ -403,7 +403,7 @@ function studioAnzeigen(id) {
 
         </div>
 
-        <div style="display:none;">
+        <div style="display:block;">
 
             <button id="excelKontrollenButton">
                 Bisherige Kontrollen anzeigen
