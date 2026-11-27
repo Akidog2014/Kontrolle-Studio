@@ -358,60 +358,67 @@ function studioAnzeigen(id) {
     );
 
     app.innerHTML = `
-        <section>
-            <h2>${sicher(studio.etablissement)}</h2>
+    <section>
+        <h2>${sicher(studio.etablissement)}</h2>
 
-            <p><strong>Ort:</strong> ${sicher(studio.ort)}</p>
-            <p><strong>Adresse:</strong> ${sicher(studio.adresse)}</p>
-            <p><strong>Gebäude:</strong> ${sicher(studio.gebaeude)}</p>
-            <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
-            <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
+        <p><strong>Ort:</strong> ${sicher(studio.ort)}</p>
+        <p><strong>Adresse:</strong> ${sicher(studio.adresse)}</p>
+        <p><strong>Gebäude:</strong> ${sicher(studio.gebaeude)}</p>
+        <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
+        <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
 
-<div style="display:none;">
+        <button id="neueKontrolle">
+            Neue Kontrolle erfassen
+        </button>
 
-    <button id="excelKontrollenButton">
-        Bisherige Kontrollen anzeigen
-    </button>
+        <h3>Studio-Fotos</h3>
 
-    <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
+        <input
+            type="file"
+            id="studioFotoDatei"
+            accept="image/*"
+            multiple
+            style="display:none;"
+        >
 
-    <h3>Neu erfasste Kontrollen</h3>
-    <div id="historie"></div>
+        <button id="studioFotoHinzufuegen">
+            Fotos hinzufügen
+        </button>
 
-</div>
+        <div id="studioFotoListe"></div>
 
-            <h3>Studio-Fotos</h3>
+        <button id="zurueck">
+            Zurück zur Suche
+        </button>
 
-<input
-    type="file"
-    id="studioFotoDatei"
-    accept="image/*"
-    multiple
-    style="display:none;"
->
+        <div style="margin-top: 35px;">
 
-<button id="studioFotoHinzufuegen">
-    Fotos hinzufügen
-</button>
+            <button id="berichtErstellen">
+                Bericht erstellen
+            </button>
 
-<button id="studioFotosTeilen">
-    Alle Fotos per E-Mail teilen
-</button>
+            <button id="studioFotosTeilen">
+                Alle Fotos per E-Mail teilen
+            </button>
 
-<div id="studioFotoListe"></div>
+        </div>
 
-<button id="berichtErstellen">
-    Bericht erstellen
-</button>
+        <div style="display:none;">
 
-<p style="color:red;">TEST – NEUE ANORDNUNG</p>
-<button id="neueKontrolle">
-    Neue Kontrolle erfassen
-</button>
+            <button id="excelKontrollenButton">
+                Bisherige Kontrollen anzeigen
+            </button>
 
-            <button id="zurueck">Zurück zur Suche</button>
-        </section>
-    `;
+            <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
+
+            <h3>Neu erfasste Kontrollen</h3>
+            <div id="historie"></div>
+
+        </div>
+
+    </section>
+`;
+    
     const excelKontrollen = document.getElementById("excelKontrollen");
 
         excelKontrollen.textContent =
