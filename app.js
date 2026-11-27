@@ -341,10 +341,8 @@ function startseite() {
     document.getElementById("suche")
         .addEventListener("click", studiosuche);
 
-    document.getElementById("import")
-        .addEventListener("click", () => {
-            document.getElementById("excelDatei").click();
-        });
+document.getElementById("import")
+    .addEventListener("click", excelImportieren);
 
     document.getElementById("excelDatei")
         .addEventListener("change", excelImportieren);
