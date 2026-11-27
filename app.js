@@ -1159,10 +1159,7 @@ async function pdfBerichtErstellen(studioId) {
 // ==========================================
 // TEIL 4: EXCEL-IMPORT
 // ==========================================
-
-async function excelImportieren() {
-
-    await fotoDatenbankBereit;
+function excelImportieren() {
 
     const dateiInput = document.createElement("input");
 
