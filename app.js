@@ -367,14 +367,18 @@ function studioAnzeigen(id) {
             <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
             <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
 
-            <button id="excelKontrollenButton">
-            Bisherige Kontrollen anzeigen
-            </button>
+<div style="display:none;">
 
-            <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
+    <button id="excelKontrollenButton">
+        Bisherige Kontrollen anzeigen
+    </button>
 
-            <h3>Neu erfasste Kontrollen</h3>
-            <div id="historie"></div>
+    <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
+
+    <h3>Neu erfasste Kontrollen</h3>
+    <div id="historie"></div>
+
+</div>
 
             <h3>Studio-Fotos</h3>
 
