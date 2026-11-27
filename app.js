@@ -1616,23 +1616,41 @@ speicherButton.addEventListener("click", async function() {
     speicherButton.disabled = true;
 
     try {
-        const dateiHandle = await window.showSaveFilePicker({
-            suggestedName: masterEintrag.name,
-            types: [{
-                description: "Excel-Arbeitsmappe",
-                accept: {
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
-                }
-            }]
-        });
+const buffer = await master.xlsx.writeBuffer();
 
-        const buffer = await master.xlsx.writeBuffer();
+const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+});
 
-        const schreibzugriff =
-            await dateiHandle.createWritable();
+const exportDatei = new File(
+    [blob],
+    masterEintrag.name,
+    {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+);
 
-        await schreibzugriff.write(buffer);
-        await schreibzugriff.close();
+if (
+    navigator.canShare &&
+    navigator.canShare({ files: [exportDatei] })
+) {
+    await navigator.share({
+        files: [exportDatei],
+        title: "Zusammengeführte Masterdatei"
+    });
+} else {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = masterEintrag.name;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
         speicherButton.remove();
 
