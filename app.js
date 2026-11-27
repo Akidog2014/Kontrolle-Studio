@@ -82,8 +82,7 @@ async function studioFotoSpeichern(
     datei,
     kontrolleId = null
 ) {
-    await fotoDatenbankBereit;
-
+    
     return new Promise((resolve, reject) => {
         const transaktion = fotoDatenbank.transaction(
             ["fotos"],
@@ -1178,6 +1177,8 @@ async function excelImportieren() {
             return;
         }
 
+        await fotoDatenbankBereit;
+        
         const bestaetigt = confirm(
             "Beim Import einer neuen Excel-Datei wird die bisherige " +
             "Kontrollhistorie ersetzt.\n\n" +
