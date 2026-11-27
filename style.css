@@ -81,3 +81,9 @@ input, textarea, select {
         padding: 22px 15px;
     }
 }
+
+#zurueck {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
