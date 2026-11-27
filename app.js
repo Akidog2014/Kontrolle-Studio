@@ -45,11 +45,7 @@ let kontrollHistorie = JSON.parse(
 let fotoDatenbank;
 
 const fotoDatenbankBereit = new Promise((resolve, reject) => {
-    const anfrage = indexedDB.open("StudioKontrolleFotos", 2);
-
-    if (!datenbank.objectStoreNames.contains("excel")) {
-    datenbank.createObjectStore("excel");
-}
+    const anfrage = indexedDB.open("StudioKontrolleFotos", 3);
 
     anfrage.onupgradeneeded = function(e) {
         const datenbank = e.target.result;
@@ -59,6 +55,10 @@ const fotoDatenbankBereit = new Promise((resolve, reject) => {
                 keyPath: "id",
                 autoIncrement: true
             });
+        }
+
+        if (!datenbank.objectStoreNames.contains("excel")) {
+            datenbank.createObjectStore("excel");
         }
     };
 
