@@ -400,6 +400,7 @@ function studioAnzeigen(id) {
     Bericht erstellen
 </button>
 
+<p style="color:red;">TEST – NEUE ANORDNUNG</p>
 <button id="neueKontrolle">
     Neue Kontrolle erfassen
 </button>
