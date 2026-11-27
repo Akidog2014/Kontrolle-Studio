@@ -1460,10 +1460,10 @@ async function kontrollenZusammenfuehren() {
     dateiAuswahl.addEventListener("change", async function() {
         const dateien = Array.from(dateiAuswahl.files);
 
-        if (dateien.length !== 3) {
-            alert("Bitte die Masterdatei und beide Exportdateien auswählen.");
-            return;
-        }
+if (dateien.length !== 2) {
+    alert("Bitte die Masterdatei und eine Exportdatei auswählen.");
+    return;
+}
 
         try {
             const geladeneDateien = [];
@@ -1486,7 +1486,7 @@ async function kontrollenZusammenfuehren() {
             const masterDateien = geladeneDateien.filter(d => !d.istExport);
             const exportDateien = geladeneDateien.filter(d => d.istExport);
 
-if (masterDateien.length !== 1 || exportDateien.length !== 2) {
+if (masterDateien.length !== 1 || exportDateien.length !== 1) {
     throw new Error(
         "Erkennung der Dateien:\n" +
         "Masterdateien: " + masterDateien.length + "\n" +
