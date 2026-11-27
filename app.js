@@ -497,70 +497,126 @@ document.getElementById("studioFotoDatei")
 studioFotosAnzeigen(id);
 }
 
+
 // Neue Kontrolle erfassen
 function kontrolleErfassen(id) {
+    const studio = studios.find(
+        s => String(s.id) === String(id)
+    );
+
+    if (!studio) {
+        alert("Studio nicht gefunden.");
+        return;
+    }
+
     const jetzt = new Date();
     const lokal = new Date(
         jetzt.getTime() - jetzt.getTimezoneOffset() * 60000
     ).toISOString().slice(0, 16);
 
-app.innerHTML = `
-    <section>
-        <h2>${sicher(studio.etablissement)}</h2>
+    app.innerHTML = `
+        <section>
+            <h2>Neue Kontrolle erfassen</h2>
 
-        <p><strong>Ort:</strong> ${sicher(studio.ort)}</p>
-        <p><strong>Adresse:</strong> ${sicher(studio.adresse)}</p>
-        <p><strong>Gebäude:</strong> ${sicher(studio.gebaeude)}</p>
-        <p><strong>Kontakt:</strong> ${sicher(studio.kontakt)}</p>
-        <p><strong>Bemerkung:</strong> ${sicher(studio.bemerkung)}</p>
+            <h3>${sicher(studio.etablissement)}</h3>
 
-        <button id="neueKontrolle">
-            Neue Kontrolle erfassen
-        </button>
+            <p><strong>Ort:</strong> ${sicher(studio.ort)}</p>
+            <p><strong>Adresse:</strong> ${sicher(studio.adresse)}</p>
 
-        <h3>Studio-Fotos</h3>
+            <form id="kontrollForm">
 
-        <input
-            type="file"
-            id="studioFotoDatei"
-            accept="image/*"
-            multiple
-            style="display:none;"
-        >
+                <label for="zeitpunkt">Datum und Uhrzeit:</label>
+                <input
+                    type="datetime-local"
+                    id="zeitpunkt"
+                    value="${lokal}"
+                    required
+                >
 
-        <button id="studioFotoHinzufuegen">
-            Fotos hinzufügen
-        </button>
+                <p><strong>Mitarbeiter:</strong> ${sicher(mitarbeiter)}</p>
 
-        <div id="studioFotoListe"></div>
+                <label for="personen">Kontrollierte Personen:</label>
+                <input
+                    type="number"
+                    id="personen"
+                    min="0"
+                    value="0"
+                    required
+                >
 
-        <button id="zurueck">
-            Zurück zur Suche
-        </button>
+                <h3>Feststellungen</h3>
 
-        <div style="margin-top: 35px;">
+                <label>Meldeverstoss:</label>
+                <input
+                    type="number"
+                    class="feststellung"
+                    data-name="Meldeverstoss"
+                    min="0"
+                    value="0"
+                >
 
-            <button id="berichtErstellen">
-                Bericht erstellen
-            </button>
+                <label>Festnahme:</label>
+                <input
+                    type="number"
+                    class="feststellung"
+                    data-name="Festnahme"
+                    min="0"
+                    value="0"
+                >
 
-            <button id="studioFotosTeilen">
-                Alle Fotos per E-Mail teilen
-            </button>
+                <label>RIPOL-Ausschreibung:</label>
+                <input
+                    type="number"
+                    class="feststellung"
+                    data-name="RIPOL-Ausschreibung"
+                    min="0"
+                    value="0"
+                >
 
-        </div>
+                <label>Bericht allgemein:</label>
+                <input
+                    type="number"
+                    class="feststellung"
+                    data-name="Bericht allgemein"
+                    min="0"
+                    value="0"
+                >
 
-        <button id="excelKontrollenButton">
-            Bisherige Kontrollen anzeigen
-        </button>
+                <label>Aufenthaltsnachforschung:</label>
+                <input
+                    type="number"
+                    class="feststellung"
+                    data-name="Aufenthaltsnachforschung"
+                    min="0"
+                    value="0"
+                >
 
-        <div id="excelKontrollen" style="display: none; white-space: pre-wrap;"></div>
+                <label for="weitere">Weitere Feststellungen / Bemerkungen:</label>
+                <textarea
+                    id="weitere"
+                    rows="4"
+                ></textarea>
 
-        <h3>Neu erfasste Kontrollen</h3>
-        <div id="historie"></div>
+                <h3>Fotos zur Kontrolle</h3>
 
-    </section>
-`;
+                <input
+                    type="file"
+                    id="kontrollFotos"
+                    accept="image/*"
+                    multiple
+                >
+
+                <button type="submit">
+                    Kontrolle speichern
+                </button>
+
+                <button type="button" id="abbrechen">
+                    Abbrechen
+                </button>
+
+            </form>
+        </section>
+    `;
 
     document.getElementById("abbrechen")
         .addEventListener("click", () => studioAnzeigen(id));
@@ -600,19 +656,19 @@ app.innerHTML = `
             }
 
             // Ausgewählte Fotos zur Kontrolle speichern
-const fotoDateien = Array.from(
-    document.getElementById("kontrollFotos").files
-);
+            const fotoDateien = Array.from(
+                document.getElementById("kontrollFotos").files
+            );
 
-try {
-    for (const datei of fotoDateien) {
-        await studioFotoSpeichern(id, datei, k.id);
-    }
-} catch (fehler) {
-    alert("Die Fotos konnten nicht gespeichert werden. Bitte nochmals versuchen.");
-    return;
-}
-           
+            try {
+                for (const datei of fotoDateien) {
+                    await studioFotoSpeichern(id, datei, k.id);
+                }
+            } catch (fehler) {
+                alert("Die Fotos konnten nicht gespeichert werden. Bitte nochmals versuchen.");
+                return;
+            }
+
             if (!kontrollHistorie[id]) {
                 kontrollHistorie[id] = [];
             }
@@ -627,6 +683,7 @@ try {
             studioAnzeigen(id);
         });
 }
+
 
 // Foto für die PDF-Erstellung vorbereiten
 function fotoAlsDataUrl(blob) {
