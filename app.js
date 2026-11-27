@@ -1630,15 +1630,7 @@ const exportDatei = new File(
     }
 );
 
-if (
-    navigator.canShare &&
-    navigator.canShare({ files: [exportDatei] })
-) {
-    await navigator.share({
-        files: [exportDatei],
-        title: "Zusammengeführte Masterdatei"
-    });
-} else {
+{
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
