@@ -306,7 +306,7 @@ function startseite() {
 
     app.innerHTML = `
         <section>
-            <h2>Studio-Kontrolle</h2>
+            <h2>Studio-Kontrolle 2</h2>
 
             <p>
                 Mitarbeiter:
